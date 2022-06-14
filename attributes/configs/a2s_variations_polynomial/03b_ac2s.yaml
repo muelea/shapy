@@ -1,0 +1,63 @@
+type: 'a2b'
+bodytalk_meas_preprocess: True
+regression:
+    degree: 2
+    alpha: 100.0
+    use_whw2s_setting: True
+network:
+    type: 'polynomial'
+    polynomial:
+        alpha: 100.0
+output_dir: 'output'
+ds_gender: 'female'
+model_gender: 'neutral'
+model_type: 'smplx'
+num_shape_comps: 10
+align: True 
+
+dataset:
+    -   'caesar'
+
+# select input features
+use_attributes: True
+use_measurements: True  
+female_attributes:
+    big: True
+    broad_shoulders: True
+    large_breasts: True
+    long_legs: True
+    long_neck: True
+    long_torso: True
+    muscular: True
+    pear_shaped: True
+    petite: True
+    short: True
+    short_arms: True
+    skinny_legs: True
+    slim_waist: True
+    tall: True
+    feminine: True
+male_attributes:
+    average: True
+    big: True
+    broad_shoulders: True
+    delicate_build: True 
+    long_legs: True
+    long_neck: True
+    long_torso: True
+    masculine: True
+    muscular: True
+    rectangular: True
+    short: True
+    short_arms: True
+    skinny_arms: True
+    soft_body: True
+    tall: True
+measurements:
+    height_bg: False 
+    weight_bg: False
+    height_gt: False 
+    weight_gt: False
+    chest: True 
+    waist: True
+    hips: True
