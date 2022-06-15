@@ -1,6 +1,6 @@
 # SHAPY
 <b> Accurate 3D Body Shape Regression using Metric and Semantic Attributes. </b>\
-[[Project Page](https://shapy.is.tue.mpg.de)] [[Paper](https://shapy.is.tue.mpg.de)] [[MPI Project Page](https://shapy.is.tue.mpg.de)]
+[[Project Page](https://shapy.is.tue.mpg.de)] [[Paper](https://ps.is.mpg.de/uploads_file/attachment/attachment/691/00928.pdf)] [[MPI Project Page](https://ps.is.mpg.de/publications/shapy-2022)]
 
 ![Teaser SHAPY](documentation/images/teaser_final.png)
 
