@@ -128,8 +128,16 @@ python evaluate.py --exp-cfg configs/b2a_expose_hrnet_eval_shape.yaml --exp-opts
 }
 ```
 
+## Acknowledgments
 
-## Acknowledgement
+This work was supported by the Max Planck ETH Center for Learning Systems and the International Max Planck Research School for Intelligent Systems. We thank Tsvetelina Alexiadis, Galina Henz, Claudia Gallatz, and Taylor McConnell for the data collection, and Markus Höschle for the camera setup. We thank
+Muhammed Kocabas, Nikos Athanasiou and Maria Alejandra Quiros-Ramirez for the insightful discussions.
+
+
+## Disclosure
+
+Conflict of interest disclosure for Michael J. Black March 11, 2022 MJB has received research gift funds from Adobe, Intel, Nvidia, Meta/Facebook, and Amazon. MJB has financial interests in Amazon, Datagen Technologies, and Meshcapade GmbH. While MJB was a part-time employee of Amazon during this project, his research was performed solely at, and funded solely by, the Max Planck Society.
+
 
 
 ## Contact
