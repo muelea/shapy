@@ -33,7 +33,7 @@ We publish two new datasets. Please see [Dataset](./documentation/DATA.md) for d
 cd regressor
 
 # run SHAPY regressor to estimate body shape for images in the wild
-python demo.py --save-vis true --save-params true --save-mesh true --split test --datasets openpose --output-folder samples/shapy_fit/ --exp-cfg configs/b2a_expose_hrnet_demo.yaml --exp-opts output_folder=../data/trained_models/shapy/SHAPY_A part_key=pose datasets.pose.openpose.data_folder=../samples datasets.pose.openpose.img_folder=images  datasets.pose.openpose.keyp_folder=openpose datasets.batch_size=1 datasets.pose_shape_ratio=1.0
+python demo.py --save-vis true --save-params true --save-mesh true --split test --datasets openpose --output-folder ../samples/shapy_fit/ --exp-cfg configs/b2a_expose_hrnet_demo.yaml --exp-opts output_folder=../data/trained_models/shapy/SHAPY_A part_key=pose datasets.pose.openpose.data_folder=../samples datasets.pose.openpose.img_folder=images  datasets.pose.openpose.keyp_folder=openpose datasets.batch_size=1 datasets.pose_shape_ratio=1.0
 ```
 
 
