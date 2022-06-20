@@ -4,6 +4,10 @@
 
 - Clone this repo, create virtual environment & install requirements
     ```
+    git clone git@github.com:muelea/shapy.git
+    cd shapy
+    mkdir data
+
     python3.8 -m venv .venv/shapy
     source .venv/shapy/bin/activate
     pip install -r requirements.txt
@@ -21,7 +25,7 @@
 
 #### Folder structure
 
-At the root of the SHAPY directory, create a folder named `data`, if it is not already present. In `data`, you will need subfolders for the neutral SMPL-X body model (body_models) and ExPose and SHAPY models and utilities (expose_release, trained_models, utility_files). The final data structure should look like this:
+In `shapy/data`, you will need subfolders for the neutral SMPL-X body model (body_models) and ExPose and SHAPY models and utilities (expose_release, trained_models, utility_files). The final data structure should look like this:
 ```bash
 data
 ├── body_models
