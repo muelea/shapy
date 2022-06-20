@@ -2,11 +2,13 @@
 
 ### Code
 
+The code has been tested with Python 3.8, CUDA 10.2 and PyTorch 1.7.1 on Ubuntu 18.04.
+
 - Clone this repo, create virtual environment & install requirements
     ```
     git clone git@github.com:muelea/shapy.git
     cd shapy
-    mkdir data
+    export PYTHONPATH=$PYTHONPATH:$(pwd)/attributes/
 
     python3.8 -m venv .venv/shapy
     source .venv/shapy/bin/activate
