@@ -198,6 +198,8 @@ network:
 
         backbone:
             type: 'hrnet'
+            hrnet: 
+                pretrained_path: '../data/trained_models/shapy/SHAPY_A/checkpoints/best_checkpoint'
         mlp:
             layers: [1024, 1024]
             dropout: 0.5

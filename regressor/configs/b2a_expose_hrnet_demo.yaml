@@ -195,6 +195,8 @@ network:
 
         backbone:
             type: 'hrnet'
+            hrnet: 
+                pretrained_path: '../data/trained_models/shapy/SHAPY_A/checkpoints/best_checkpoint'
         mlp:
             layers: [1024, 1024]
             dropout: 0.5
@@ -220,7 +222,7 @@ body_model:
             num: 10
         j14_regressor_path: '../data/expose_release/data/SMPLX_to_J14.pkl'
         use_face_contour: True
-        extra_joint_path: '../data/expose_release/utility_files/smplx/smplx_extra_joints.yaml'
+        extra_joint_path: ''
         head_verts_ids_path: '../data/expose_release/utility_files/flame/SMPL-X__FLAME_vertex_ids.npy'
 
         global_rot:
