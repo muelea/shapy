@@ -24,7 +24,7 @@ def main(
     demo_output_folder: os.PathLike = 'demo_output',
     meas_definition_path:  os.PathLike = '',
     meas_vertices_path:  os.PathLike = '',
-    smpl_model_path:  os.PathLike = 'data/models/smpl',
+    smpl_model_path:  os.PathLike = 'data/body_models/smpl',
     gender: str = 'neutral',
     num_betas: int = 10,
     render: bool = True,
@@ -119,7 +119,7 @@ if __name__ == '__main__':
                         default='../data/utility_files/measurements/smplx_measurements.yaml', type=str,
                         help='Path to measurement vertices')
     parser.add_argument('--smpl_model_path', dest='smpl_model_path',
-                        default='../data/expose_release/models', type=str,
+                        default='../data/body_models', type=str,
                         help='Path to smpl model folder')
     parser.add_argument('--num_betas', dest='num_betas',
                         default=10, type=int,
