@@ -53,7 +53,7 @@ datasets:
             mesh_folder: 'smplx'
             meas_definition_path: '../data/utility_files/measurements/measurement_defitions.yaml'
             meas_vertices_path: '../data/utility_files/measurements/smplx_measurements.yaml'
-            body_model_folder: '../data/expose_release/models/'
+            body_model_folder: '../data/body_models/'
         ssp3d:
             data_folder: '../datasets/ssp_3d/'
             label_fname: '../data/utility_files/ssp_3d/smplx_labels_with_vertices.npz'
@@ -214,7 +214,7 @@ network:
 
 body_model:
     type: 'smplx'
-    model_folder: '../data/expose_release/models/'
+    model_folder: '../data/body_models/'
     smplx:
         mean_pose_path: '../data/expose_release/data/all_means.pkl'
         betas:

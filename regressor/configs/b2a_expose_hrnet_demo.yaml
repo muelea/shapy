@@ -53,7 +53,7 @@ datasets:
             mesh_folder: 'v_templates/smplx_with_optimization'
             meas_definition_path: '../data/utility_files/measurements/measurement_defitions.yaml'
             meas_vertices_path: '../data/utility_files/measurements/smplx_measurements.yaml'
-            body_model_folder: '../data/expose_release/models/'
+            body_model_folder: '../data/body_models/'
     pose:
         vertex_flip_correspondences: '../data/utility_files/smplx/smplx_correspondences.npz'
         sampler:
@@ -211,7 +211,7 @@ network:
 
 body_model:
     type: 'smplx'
-    model_folder: '../data/expose_release/models/'
+    model_folder: '../data/body_models/'
     smplx:
         mean_pose_path: '../data/expose_release/data/all_means.pkl'
         betas:
