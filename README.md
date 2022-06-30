@@ -48,7 +48,7 @@ We compute virtual measurements from a 3D mesh in SMPL topology.
 cd measurements
 
 # given SMPL betas compute anthropometric measurements
-python virtual_measurements.py --input-folder ../samples/shapy_fit/ --output-folder=../samples/virtual_measurements/
+python virtual_measurements.py --input-folder ../samples/shapy_fit_for_virtual_measurements/ --output-folder=../samples/virtual_measurements/
 
 # given measurements fit SMPL model
 
