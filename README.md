@@ -49,14 +49,6 @@ cd measurements
 
 # given SMPL betas compute anthropometric measurements
 python virtual_measurements.py --input-folder ../samples/shapy_fit_for_virtual_measurements/ --output-folder=../samples/virtual_measurements/
-
-# given measurements fit SMPL model
-
-# 1. Optimize for the female betas that give a height of 1.80 and mass of 80 kg.
-python examples/fit_measurements.py --model-folder SMPL_MODEL_FOLDER --model-type smpl --meas-vertices-path data/smpl_measurement_vertices.yaml --height 1.80 --mass 80 --gender female
-# 2. Optimize for the male betas that give a height of 1.80 and mass of 80 kg.
-python examples/fit_measurements.py --model-folder SMPL_MODEL_FOLDER --model-type smpl --meas-vertices-path data/smpl_measurement_vertices.yaml --height 1.80 --mass 80 --gender male
-
 ```
 
 #### Shape to Attributes (S2A)
@@ -106,15 +98,6 @@ python demo.py --demo_output_folder ../samples/a2s_fit/04b_ahcwh2s_mm --exp-cfg 
 ```
 
 
-
-## SHAPY Evaluation
-
-```
-cd regressor
-
-# evaluate SHAPY on HBW, MMTS, SSP-3D
-python evaluate.py --exp-cfg configs/b2a_expose_hrnet_eval_shape.yaml --exp-opts output_folder=../data/trained_models/shapy/SHAPY_A datasets.batch_size=1 datasets.pose_shape_ratio=0.0 is_training=False
-```
 
 ## Citation
 ```
