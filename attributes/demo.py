@@ -139,7 +139,7 @@ if __name__ == "__main__":
                         help='The configuration of the experiment')
     parser.add_argument('--demo_output_folder', default='../samples/a2s_fit',
                         help='folder where the fitted mesh is stored.')
-    parser.add_argument('--smpl_model_path', default='../data/expose_release/models',
+    parser.add_argument('--smpl_model_path', default='../data/body_models',
                         help='Body model folder.')
     parser.add_argument('--exp-opts', default=[], dest='exp_opts',
                         nargs='*',

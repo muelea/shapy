@@ -18,7 +18,7 @@ SELF_REPORT_BIAS = {
     }
 }
 
-MODEL_PATH = '../data/expose_release/models/'
+MODEL_PATH = '../data/body_models/'
 
 MODEL_EDGES = {
     'smplx': '../data/utility_files/smplx/smplx_edges.npy'
@@ -31,8 +31,8 @@ MEAS = {
 }
 
 HD = {
-    'smpl': '../data/utility_files/evaluation/eval_point_set/HD_SMPL_sparse.pt',
-    'smplx': '../data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pt',
+    'smpl': '../data/utility_files/evaluation/eval_point_set/HD_SMPL_sparse.pkl',
+    'smplx': '../data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pkl',
 }
 
 ATTRIBUTE_NAMES = {

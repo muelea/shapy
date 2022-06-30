@@ -177,9 +177,20 @@ class A2B(pl.LightningModule):
 
         self.val_metric = cfg.get('val_metric', 'v2v_hd')
         
-        hd_operator = torch.load(constants.HD.get(model_type))
-        self.register_buffer('hd_operator', hd_operator)
+        #hd_operator = torch.load(constants.HD.get(model_type))
+        #self.register_buffer('hd_operator', hd_operator)
 
+        with open(constants.HD.get(model_type), 'rb') as f:
+            hd_operator_pkl = pickle.load(f).tocoo()
+            indices = np.vstack(
+            (hd_operator_pkl.row, hd_operator_pkl.col)
+            )
+            values = hd_operator_pkl.data
+            shape = hd_operator_pkl.shape
+            hd_operator = torch.sparse_coo_tensor(
+                indices, values, shape
+            )
+            self.register_buffer('hd_operator', hd_operator) 
 
         self.height_weight = cfg.get('height_weight', 0.0)
         self.height_loss = nn.MSELoss()
