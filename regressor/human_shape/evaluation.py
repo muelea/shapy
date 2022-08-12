@@ -671,6 +671,9 @@ class Evaluator(object):
             bins = np.array([20,25,30,35,40])
             bins_names = ['<20', '20-25', '25-30', '30-35', '35-40', '>40']
 
+            save_v_shaped = []
+            save_labels = []
+
             for ii, batch in enumerate(
                     tqdm(dataloader, desc=desc,
                          leave=False, dynamic_ncols=True)):
@@ -685,6 +688,9 @@ class Evaluator(object):
                 num_stages = model_output.get('num_stages', 1)
                 stage_n_out = model_output.get(
                     f'stage_{num_stages - 1:02d}', {})
+                save_v_shaped.append(stage_n_out['v_shaped'].cpu().numpy())
+                save_label = '/'.join(targets[0].get_field('filename').split('/')[-4:])
+                save_labels.append(save_label)
                 if ii == 0:
                     self.create_image_summaries(
                         step, dset_name,
@@ -703,6 +709,7 @@ class Evaluator(object):
                     mpjpe_root_joints_names=self.mpjpe_root_joints_names[
                         'body']
                 )
+                
                 for key, value in curr_metrics.items():
                     metric_values[key].append(value)
 
@@ -756,4 +763,5 @@ class Evaluator(object):
                 summary_name = f'{dset_name}/{metric_name}'
                 self.filewriter.add_scalar(
                     summary_name, mean_metric_value, step)
+
         return

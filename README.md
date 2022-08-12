@@ -5,6 +5,18 @@
 ![Teaser SHAPY](documentation/images/teaser_final.png)
 
 
+## In this repo you will find ...
+... [SHAPY](#regressor), a state-of-the-art network that predicts the body shape of a person from a single image. The body shape is represented as [SMPL-X](https://smpl-x.is.tue.mpg.de) parameters or metric measurements, i.e. height, weight and chest/waist/hip circumference.
+... [Virtual Measurements](#virtual-measurements), a method to compute body measurements from a 3D human mesh.
+... [Shape to Attributes](#shape-to-attributes-s2a), a model to obtain ratings how much a word that describes body shape applies to a SMPL-X body.
+... [Attribute to Shape](#attributes-to-shape-a2s), a model to obtain the body shape of a person from linguistic attribute ratings and body measurements. 
+
+
+##  News
+- [2022/08/11] The HBW Test split evluation protocol is available. See [HBW Test](regressor/hbw_evaluation/README_HBW_EVAL.md)
+- [2022/08/11] Supporting SHAPY evaluation on the HBW validation set. See [Evaluation](#evaluation).
+
+
 ## License
 
 Software Copyright License for **non-commercial scientific research purposes**. Please read carefully the following [terms and conditions](https://github.com/muelea/shapy/blob/master/LICENSE) and
@@ -92,11 +104,24 @@ python demo.py --demo_output_folder ../samples/a2s_fit/04b_ahcwh2s_fn --exp-cfg 
 # e) male attributes + height + chest + waist + hips to gender-neutral betas
 python demo.py --demo_output_folder ../samples/a2s_fit/04b_ahcwh2s_mn --exp-cfg configs/a2s_variations_polynomial/04b_ahcwh2s.yaml --exp-opts output_dir=../data/trained_models/a2b/caesar-male_smplx-neutral-10betas/poynomial/04b_ahcwh2s.yaml/ ds_gender=male model_gender=neutral num_shape_comps=10
 
-# f) male attributes + height + chest + waist + hips to gender-specific betas
+# f) male attributes + height + chest + waistß + hips to gender-specific betas
 python demo.py --demo_output_folder ../samples/a2s_fit/04b_ahcwh2s_mm --exp-cfg configs/a2s_variations_polynomial/04b_ahcwh2s.yaml --exp-opts output_dir=../data/trained_models/a2b/caesar-male_smplx-male-10betas/poynomial/04b_ahcwh2s.yaml/ ds_gender=male model_gender=male num_shape_comps=10
 
 ```
 
+
+## Evaluation
+You can evaluate SHAPY on the HBW valiation set. To evaluate your own model on the HBW test set, please follow the instructions [here](regressor/hbw_evaluation/README_HBW_EVAL.md).
+
+First, create a symlink in $SHAPY_REPO/datasets to your original HBW folder:
+`ln -s $HBW_FOLDER $SHAPY_REPO/datasets/HBW`. Alternatively, you can change the 
+HBW data_folder (l.46) in `regressor/configs/b2a_expose_hrnet_eval_shape.yaml`.
+
+```
+cd regressor
+
+python evaluate.py --exp-cfg configs/b2a_expose_hrnet_eval_shape.yaml --exp-opts output_folder=../data/trained_models/shapy/SHAPY_A datasets.batch_size=1 datasets.pose_shape_ratio=0.0 is_training=False run_final_evaluation_on_validation_set=True
+```
 
 
 ## Citation

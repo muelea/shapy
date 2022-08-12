@@ -48,6 +48,7 @@ class Evaluation:
     )
 
 
+
 @dataclass
 class Config:
     num_gpus: int = 1
@@ -106,6 +107,6 @@ class Config:
     losses: LossConfig = LossConfig()
 
     evaluation: Evaluation = Evaluation()
-
+    run_final_evaluation_on_validation_set: bool = False
 
 conf = OmegaConf.structured(Config)

@@ -43,6 +43,7 @@ DIST_FORMAT = ('<green>{{time:YYYY-MM-DD HH:mm:ss.SSS}}</green> |'
 
 def main():
     exp_cfg = parse_args()
+    eval_on_val_split = exp_cfg.get('run_final_evaluation_on_validation_set')
 
     device = torch.device('cuda')
     if not torch.cuda.is_available():
@@ -119,7 +120,9 @@ def main():
     os.makedirs(code_folder, exist_ok=True)
 
     # Set the model to evaluation mode
-    data_loaders = build_all_data_loaders(exp_cfg, split='test')
+    dataset_split = 'val' if eval_on_val_split else 'test'
+    logger.info(f'Loading {dataset_split} split for evaluation.')
+    data_loaders = build_all_data_loaders(exp_cfg, split=dataset_split)
 
     arguments = {'iteration': 0}
     extra_checkpoint_data = checkpointer.load_checkpoint()

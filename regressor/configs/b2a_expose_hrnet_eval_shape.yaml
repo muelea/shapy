@@ -25,8 +25,8 @@ datasets:
             ratio_2d: 0.25
         splits:
             train: []
-            val: []
-            test: ['hbw', 'ssp3d']
+            val: ['hbw']
+            test: []
         transforms:
             max_size: 800
             flip_prob: 0.5
@@ -225,7 +225,7 @@ body_model:
             num: 10
         j14_regressor_path: '../data/expose_release/data/SMPLX_to_J14.pkl'
         use_face_contour: True
-        extra_joint_path: '../data/expose_release/utility_files/smplx/smplx_extra_joints.yaml'
+        extra_joint_path: ''
         head_verts_ids_path: '../data/expose_release/utility_files/flame/SMPL-X__FLAME_vertex_ids.npy'
 
         global_rot:

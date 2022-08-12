@@ -102,7 +102,7 @@ class HumanBodyInTheWild(dutils.Dataset):
 
         # get the ground truth mesh
         gt_v_shaped = {}
-        if self.split == 'val':
+        if self.split in ['val', 'test']:
             for fname in os.listdir(self.mesh_folder):
                 if fname.startswith('.') or fname[-4:] != '.obj':
                     continue
@@ -152,7 +152,7 @@ class HumanBodyInTheWild(dutils.Dataset):
             subject_id = tokens[0]
 
             # add measurements
-            if self.split == 'val':
+            if self.split in ['val', 'test']:
                 curr_v_shaped = torch.from_numpy(gt_v_shaped[subject_id]).unsqueeze(0).float()
                 curr_triangles = curr_v_shaped[:, body_model_faces].to(self.device)
                 curr_subj_meas_val = measurements(curr_triangles)['measurements']
@@ -207,7 +207,7 @@ class HumanBodyInTheWild(dutils.Dataset):
                     subject_ids.append(subject_id)
                     genders.append(gender_data[subject_id])
                     keypoints2d.append(keyp_data)
-                    if self.split == 'val':
+                    if self.split in ['val', 'test']:
                         v_shaped.append(gt_v_shaped[subject_id])
                         height.append(curr_subj_meas_val['height']['tensor'].item())
                         chest.append(curr_subj_meas_val['chest']['tensor'].item())
@@ -218,7 +218,7 @@ class HumanBodyInTheWild(dutils.Dataset):
         self.subject_ids = np.asarray(subject_ids)
         self.img_fnames = img_fnames
         self.genders = np.asarray(genders)
-        if self.split == 'val':
+        if self.split in ['val', 'test']:
             self.v_shaped = np.stack(v_shaped)
             self.height = np.asarray(height)
             self.chest = np.asarray(chest)
@@ -370,7 +370,7 @@ class HumanBodyInTheWild(dutils.Dataset):
         target.add_field('orig_center', center)
         target.add_field('bbox', bbox)
 
-        if self.split == 'val':
+        if self.split in ['val', 'test']:
             target.add_field('v_shaped', Vertices(self.v_shaped[index]))
 
         target.add_field('gender', self.genders[index])
@@ -384,7 +384,7 @@ class HumanBodyInTheWild(dutils.Dataset):
         target.add_field('fname', img_only_fn)
         target.add_field('filename', img_fn)
 
-        if self.split == 'val':
+        if self.split in ['val', 'test']:
             target.add_field('height', self.height[index])
             target.add_field('chest', self.chest[index])
             target.add_field('waist', self.waist[index])
