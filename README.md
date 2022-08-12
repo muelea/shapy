@@ -7,8 +7,11 @@
 
 ## In this repo you will find ...
 ... [SHAPY](#regressor), a state-of-the-art network that predicts the body shape of a person from a single image. The body shape is represented as [SMPL-X](https://smpl-x.is.tue.mpg.de) parameters or metric measurements, i.e. height, weight and chest/waist/hip circumference.
+
 ... [Virtual Measurements](#virtual-measurements), a method to compute body measurements from a 3D human mesh.
+
 ... [Shape to Attributes](#shape-to-attributes-s2a), a model to obtain ratings how much a word that describes body shape applies to a SMPL-X body.
+
 ... [Attribute to Shape](#attributes-to-shape-a2s), a model to obtain the body shape of a person from linguistic attribute ratings and body measurements. 
 
 
