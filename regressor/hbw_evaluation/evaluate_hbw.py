@@ -13,6 +13,7 @@ import torch
 from tqdm import tqdm
 
 import smplx
+from loguru import logger
 
 from body_measurements import BodyMeasurements
 
@@ -46,7 +47,7 @@ def point_error(
     y: Array,
     align: bool = True,
 ) -> float:
-    
+
     t = 0.0
     if align:
         t = x.mean(0, keepdims=True) - y.mean(0, keepdims=True)
@@ -65,8 +66,12 @@ def main(
     point_reg_gt: str = DEFAULT_POINT_REG_SMPLX,
     point_reg_fit: str = DEFAULT_POINT_REG_SMPLX,
     body_measurement_folder: str = DEFAULT_BODY_MEASUREMENT_FOLDER,
-    body_model_folder: str = DEFAULT_BODY_MODEL_FOLDER
+    body_model_folder: str = DEFAULT_BODY_MODEL_FOLDER,
+    use_cuda: bool = True,
 ) -> None:
+
+    device = torch.device('cuda' if use_cuda else 'cpu')
+    logger.info(f'Device: {device}')
 
     # read submitted npz file
     new_method_result = np.load(input_npz_file)
@@ -81,19 +86,22 @@ def main(
         point_regressor_fit = pickle.load(f)
 
     # load files to compute Measurements Error
-    meas_def_path = osp.join(body_measurement_folder, 'measurement_defitions.yaml')
-    meas_verts_path_gt = osp.join(body_measurement_folder, 'smplx_measurements.yaml')
+    meas_def_path = osp.join(body_measurement_folder,
+                             'measurement_defitions.yaml')
+    meas_verts_path_gt = osp.join(
+        body_measurement_folder, 'smplx_measurements.yaml')
     body_measurements_gt = BodyMeasurements(
         {'meas_definition_path': meas_def_path,
             'meas_vertices_path': meas_verts_path_gt},
-    ).to('cuda')
+    ).to(device=device)
     model_measurements_file_fit = f'{model_type}_measurement_vertices.yaml' \
         if model_type == 'smpl' else f'{model_type}_measurements.yaml'
-    meas_verts_path_fit = osp.join(body_measurement_folder, model_measurements_file_fit)
+    meas_verts_path_fit = osp.join(
+        body_measurement_folder, model_measurements_file_fit)
     body_measurements_fit = BodyMeasurements(
         {'meas_definition_path': meas_def_path,
             'meas_vertices_path': meas_verts_path_fit},
-    ).to('cuda')
+    ).to(device=device)
 
     # create SMPL model
     body_model = smplx.create(
@@ -137,23 +145,30 @@ def main(
 
         # compute height/chest/waist/hip error
         shaped_triangles_gt = v_shaped_gt[faces_tensor]
-        shaped_triangles_gt = torch.from_numpy(shaped_triangles_gt) \
-            .unsqueeze(0).to('cuda')
+        shaped_triangles_gt = torch.from_numpy(shaped_triangles_gt).unsqueeze(
+            0).to(device=device)
         measurements_gt = body_measurements_gt(
-            shaped_triangles_gt)['measurements']
+            shaped_triangles_gt,
+            vertices=torch.from_numpy(
+                v_shaped_gt).unsqueeze(0).to(device=device),
+            faces=body_model.faces_tensor[None]
+        )['measurements']
 
         shaped_triangles_fit = v_shaped_fit[faces_tensor]
         shaped_triangles_fit = torch.from_numpy(shaped_triangles_fit) \
-            .unsqueeze(0).to('cuda')
+            .unsqueeze(0).to(device=device)
         measurements_fit = body_measurements_fit(
-            shaped_triangles_fit)['measurements']
-        
+            shaped_triangles_fit,
+            vertices=torch.from_numpy(v_shaped_fit[None]).to(device=device),
+            faces=body_model.faces_tensor.reshape(1, -1, 3),
+        )['measurements']
+
         for k in measurement_errors.keys():
-            error = abs(measurements_gt[k]['tensor'].item() - \
-                measurements_fit[k]['tensor'].item())
+            error = abs(measurements_gt[k]['tensor'].item() -
+                        measurements_fit[k]['tensor'].item())
             measurement_errors[k].append(error)
 
-    # print result 
+    # print result
     final_v2v_t_error = np.array(v2v_t_errors).mean() * 1000
     print(f'V2V Error: {final_v2v_t_error:.0f} mm')
 
@@ -167,6 +182,7 @@ def main(
         else:
             final_mmts_error = np.array(v).mean()
             print(f'{k} Error: {final_mmts_error:.0f} kg')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -204,6 +220,9 @@ if __name__ == '__main__':
                         type=str,
                         help='The path to the smpl/body model folder.'
                         )
+    parser.add_argument('--use-cuda', dest='use_cuda', default=True,
+                        type=lambda x: x.lower() in ['true', '1'],
+                        help='Use CUDA for computations.')
 
     args = parser.parse_args()
 
@@ -213,4 +232,5 @@ if __name__ == '__main__':
         model_type=args.model_type,
         point_reg_gt=args.point_reg_gt,
         point_reg_fit=args.point_reg_fit,
+        use_cuda=args.use_cuda,
     )
