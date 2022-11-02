@@ -6,7 +6,6 @@ import os.path as osp
 import yaml
 import numpy as np
 
-from mesh_mesh_intersection import MeshMeshIntersection
 import torch
 import torch.autograd as autograd
 import torch.nn as nn
@@ -25,7 +24,12 @@ class BodyMeasurements(nn.Module):
     # The density of the human body is 985 kg / m^3
     DENSITY = 985
 
-    def __init__(self, cfg, **kwargs):
+    def __init__(
+        self,
+        cfg,
+        load_cuda_ext: bool = False,
+        **kwargs
+    ):
         ''' Loss that penalizes deviations in weight and height
         '''
         super(BodyMeasurements, self).__init__()
@@ -82,8 +86,11 @@ class BodyMeasurements(nn.Module):
         self.register_buffer('hips_bcs', hips_bcs)
 
         max_collisions = cfg.get('max_collisions', 256)
-        self.isect_module = MeshMeshIntersection(
-            max_collisions=max_collisions)
+
+        if load_cuda_ext:
+            from mesh_mesh_intersection import MeshMeshIntersection
+            self.isect_module = MeshMeshIntersection(
+                max_collisions=max_collisions)
 
     def extra_repr(self) -> str:
         msg = []

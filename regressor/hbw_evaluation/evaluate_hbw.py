@@ -93,6 +93,7 @@ def main(
     body_measurements_gt = BodyMeasurements(
         {'meas_definition_path': meas_def_path,
             'meas_vertices_path': meas_verts_path_gt},
+        load_cuda_ext=use_cuda,
     ).to(device=device)
     model_measurements_file_fit = f'{model_type}_measurement_vertices.yaml' \
         if model_type == 'smpl' else f'{model_type}_measurements.yaml'
@@ -101,6 +102,7 @@ def main(
     body_measurements_fit = BodyMeasurements(
         {'meas_definition_path': meas_def_path,
             'meas_vertices_path': meas_verts_path_fit},
+        load_cuda_ext=use_cuda,
     ).to(device=device)
 
     # create SMPL model
