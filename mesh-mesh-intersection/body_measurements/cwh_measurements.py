@@ -57,10 +57,10 @@ class ChestWaistHipsMeasurements(nn.Module):
         )
 
         with open(meas_definition_path, 'r') as f:
-            measurements_definitions = yaml.load(f)
+            measurements_definitions = yaml.load(f, Loader=yaml.SafeLoader)
 
         with open(meas_vertices_path, 'r') as f:
-            meas_vertices = yaml.load(f)
+            meas_vertices = yaml.load(f, Loader=yaml.SafeLoader)
 
         action = measurements_definitions['CW_p']
         chest_periphery_data = meas_vertices[action[0]]

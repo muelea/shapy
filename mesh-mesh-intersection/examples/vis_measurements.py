@@ -34,7 +34,7 @@ from star.pytorch.star import STAR
 from star.config import cfg as star_cfg
 
 from mesh_mesh_intersection import MeshMeshIntersection
-from body_measurements import ChestWaistHipsMeasurements
+from body_measurements import ChestWaistHipsMeasurements, BodyMeasurements
 
 
 def get_plane_at_height(h):
@@ -45,36 +45,40 @@ def get_plane_at_height(h):
     return verts, faces, (verts[0], normal)
 
 
+def my_bool_arg(x):
+    return x.lower() in ['true', '1']
+
+
+def to_numpy(x):
+    if torch.is_tensor(x):
+        x = x.detach().cpu().numpy()
+    return x
+
+
 def main(
     model_folder,
     model_type='smplx',
     ext='npz',
     gender='neutral',
-    plot_joints=False,
     num_betas=10,
     sample_shape=False,
     num_expression_coeffs=10,
-    plotting_module='pyrender',
     num_samples=1,
-    use_face_contour=False,
     meas_definition_path: str = 'data/measurement_defitions.yaml',
     meas_vertices_path: str = 'data/smpl_measurement_vertices.yaml',
+    use_cuda: bool = True,
 ):
 
-    device = torch.device('cuda')
+    device = torch.device('cuda' if use_cuda else 'cpu')
+    dtype = torch.float32
 
-    meas_module = ChestWaistHipsMeasurements(
+    meas_module = BodyMeasurements(dict(
         meas_definition_path=meas_definition_path,
         meas_vertices_path=meas_vertices_path,
-        #  '$HOME/workspace/caesar_betas_exps/measurement_defitions.yaml',
-        #  '$HOME/workspace/caesar_betas_exps/smpl_measurement_vertices.yaml',
     )
-    #  meas_module = ChestWaistHipsMeasurements(
-    #  '$HOME/workspace/caesar_betas_exps/measurement_defitions.yaml',
-    #  '$HOME/workspace/caesar_betas_exps/smplx_measurements.yaml',
-    #  )
+    )
+
     meas_module = meas_module.to(device=device)
-    dtype = torch.float32
 
     trans, pose = None, None
     if model_type == 'star':
@@ -87,43 +91,38 @@ def main(
         pose = torch.zeros([num_samples, 72], dtype=dtype, device=device)
     else:
         model = smplx.build_layer(
-            model_folder, model_type=model_type,
-            gender=gender, use_face_contour=use_face_contour,
-            num_betas=num_betas,
-            num_expression_coeffs=num_expression_coeffs,
+            model_folder, model_type=model_type, gender=gender,
+            num_betas=num_betas, num_expression_coeffs=num_expression_coeffs,
             ext=ext)
 
     model = model.to(device=device)
 
-    #  meas_to_vis = ['CW_p', 'BW_p', 'IW_p']
-    #  meas_to_vis = ['CW_p']
-
     if sample_shape:
-        #  betas = shape_dist.sample().reshape(1, -1)
-        betas = torch.randn(
-            [num_samples, model.num_betas],
-            requires_grad=True,
-            dtype=torch.float32, device=device)
+        np.random.seed(0)
+        betas = np.random.rand(num_samples, model.num_betas)
+        betas = torch.from_numpy(betas).to(device=device, dtype=dtype)
     else:
         betas = torch.zeros(
             [num_samples, model.num_betas],
-            requires_grad=True, dtype=torch.float32, device=device)
-
-    model.zero_grad()
+            dtype=torch.float32, device=device)
 
     if model_type == 'star':
         vertices = model(pose=pose, trans=trans, betas=betas)
         model_tris = vertices[:, model.faces]
-        vertices = vertices.detach().cpu().numpy()
-        faces = model.faces.detach().cpu().numpy()
+        faces = to_numpy(model.faces)
+        faces_tensor = model.faces
     else:
         output = model(betas=betas, return_verts=True)
-        vertices = output.vertices.detach().cpu().numpy()
-        model_tris = output.vertices[:, model.faces_tensor]
+        vertices = output.vertices
         faces = model.faces
-    output = meas_module(model_tris)
+        faces_tensor = model.faces_tensor[None].expand(len(vertices), -1, -1)
+        model_tris = output.vertices[:, model.faces_tensor]
 
-    #  loss = sum(v.pow(2) for v in output['chest']['value'])
+    output = meas_module(
+        model_tris, vertices=vertices, faces=faces_tensor,
+        compute_mass=False, compute_height=False,)['measurements']
+
+    vertices = to_numpy(vertices)
 
     for n in range(num_samples):
 
@@ -138,12 +137,18 @@ def main(
         geometry = []
         geometry.append(mesh)
 
+        meas_values = [
+            f'{meas_name}: {output[meas_name]["value"][n].item() * 100:.3f} (cm)'
+            for meas_name in output]
+        logger.info(f'{n}: {meas_values}')
+
         for meas_name in output:
             pcl = o3d.geometry.PointCloud()
             if 'points' not in output[meas_name]:
                 continue
 
-            points = output[meas_name]['points']
+            meas_value = output[meas_name]['value'][n]
+            points = output[meas_name]['points'][n]
             if isinstance(points, (tuple, list)):
                 points = torch.stack(points)
             if torch.is_tensor(points):
@@ -170,8 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--model-folder', required=True, type=str,
                         help='The path to the model folder')
     parser.add_argument('--model-type', default='smplx', type=str,
-                        choices=['smpl', 'smplh', 'smplx', 'mano', 'flame',
-                                 'star', ],
+                        choices=['smpl', 'smplh', 'smplx', 'star', ],
                         help='The type of model to load')
     parser.add_argument('--gender', type=str, default='neutral',
                         help='The gender of the model')
@@ -181,26 +185,15 @@ if __name__ == '__main__':
     parser.add_argument('--num-expression-coeffs', default=10, type=int,
                         dest='num_expression_coeffs',
                         help='Number of expression coefficients.')
-    parser.add_argument('--plotting-module', type=str, default='pyrender',
-                        dest='plotting_module',
-                        choices=['pyrender', 'matplotlib', 'open3d'],
-                        help='The module to use for plotting the result')
     parser.add_argument('--ext', type=str, default='npz',
                         help='Which extension to use for loading')
-    parser.add_argument('--plot-joints', default=False,
-                        type=lambda arg: arg.lower() in ['true', '1'],
-                        help='The path to the model folder')
     parser.add_argument('--sample-shape', default=False,
-                        dest='sample_shape',
-                        type=lambda arg: arg.lower() in ['true', '1'],
+                        dest='sample_shape', type=my_bool_arg,
                         help='Sample a random shape')
     parser.add_argument('--sample-expression', default=True,
                         dest='sample_expression',
-                        type=lambda arg: arg.lower() in ['true', '1'],
+                        type=my_bool_arg,
                         help='Sample a random expression')
-    parser.add_argument('--use-face-contour', default=False,
-                        type=lambda arg: arg.lower() in ['true', '1'],
-                        help='Compute the contour of the face')
     parser.add_argument('--num-samples', default=1, type=int,
                         dest='num_samples',
                         help='Number of samples to draw.')
@@ -214,16 +207,15 @@ if __name__ == '__main__':
                         default='data/smpl_measurement_vertices.yaml',
                         help='The indices of the vertices used for the'
                         ' the measurements')
+    parser.add_argument('--use-cuda', dest='use_cuda', default=False,
+                        type=my_bool_arg, help='Use CUDA for computations.')
 
     args = parser.parse_args()
 
     model_folder = osp.expanduser(osp.expandvars(args.model_folder))
     model_type = args.model_type
-    plot_joints = args.plot_joints
-    use_face_contour = args.use_face_contour
     gender = args.gender
     ext = args.ext
-    plotting_module = args.plotting_module
     num_betas = args.num_betas
     num_expression_coeffs = args.num_expression_coeffs
     sample_shape = args.sample_shape
@@ -231,15 +223,15 @@ if __name__ == '__main__':
     num_samples = args.num_samples
     meas_definition_path = args.meas_definition_path
     meas_vertices_path = args.meas_vertices_path
+    use_cuda = args.use_cuda
 
     main(model_folder, model_type, ext=ext,
-         gender=gender, plot_joints=plot_joints,
+         gender=gender,
          num_betas=num_betas,
          num_samples=num_samples,
          num_expression_coeffs=num_expression_coeffs,
          sample_shape=sample_shape,
-         plotting_module=plotting_module,
          meas_definition_path=meas_definition_path,
          meas_vertices_path=meas_vertices_path,
-         use_face_contour=use_face_contour,
+         use_cuda=use_cuda,
          )

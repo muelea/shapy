@@ -1,4 +1,7 @@
 from typing import NewType, Dict, Tuple
+
+import sys
+
 import os.path as osp
 import yaml
 import numpy as np
@@ -8,7 +11,10 @@ import torch
 import torch.autograd as autograd
 import torch.nn as nn
 import torch.nn.functional as F
+
+import trimesh
 from scipy.spatial import ConvexHull
+
 from loguru import logger
 
 Tensor = NewType('Tensor', torch.Tensor)
@@ -76,7 +82,8 @@ class BodyMeasurements(nn.Module):
         self.register_buffer('hips_bcs', hips_bcs)
 
         max_collisions = cfg.get('max_collisions', 256)
-        self.isect_module = MeshMeshIntersection(max_collisions=max_collisions)
+        self.isect_module = MeshMeshIntersection(
+            max_collisions=max_collisions)
 
     def extra_repr(self) -> str:
         msg = []
@@ -96,9 +103,11 @@ class BodyMeasurements(nn.Module):
 
         return verts, faces, verts[:, faces]
 
-    def compute_peripheries(
+    def compute_peripheries_cuda(
         self,
         triangles: Tensor,
+        vertices: Tensor = None,
+        faces: Tensor = None,
         compute_chest: bool = True,
         compute_waist: bool = True,
         compute_hips: bool = True,
@@ -179,6 +188,114 @@ class BodyMeasurements(nn.Module):
             output[name]['tensor'] = torch.stack(output[name]['value'])
         return output
 
+    def compute_peripheries(
+        self,
+        triangles: Tensor,
+        vertices: Tensor = None,
+        faces: Tensor = None,
+        compute_chest: bool = True,
+        compute_waist: bool = True,
+        compute_hips: bool = True,
+    ) -> Dict[str, Tensor]:
+        '''
+            Parameters
+            ----------
+                triangles: BxFx3x3 torch.Tensor
+                Contains the triangle coordinates for a batch of meshes with
+                the same topology
+        '''
+
+        if triangles.is_cuda:
+            return self.compute_peripheries_cuda(
+                triangles=triangles, compute_chest=compute_chest,
+                compute_hips=compute_hips, compute_waist=compute_waist)
+
+        batch_size, num_triangles = triangles.shape[:2]
+        device = triangles.device
+
+        batch_indices = torch.arange(
+            batch_size, dtype=torch.long,
+            device=device).reshape(-1, 1) * num_triangles
+
+        meas_data = {}
+        if compute_chest:
+            meas_data['chest'] = (self.chest_face_index, self.chest_bcs)
+        if compute_waist:
+            meas_data['waist'] = (self.belly_face_index, self.belly_bcs)
+        if compute_hips:
+            meas_data['hips'] = (self.hips_face_index, self.hips_bcs)
+
+        bcs = torch.stack(
+            [self.chest_bcs, self.belly_bcs, self.hips_bcs], dim=0)
+        indices = torch.tensor(
+            [self.chest_face_index, self.belly_face_index,
+             self.hips_face_index], device=device, dtype=torch.long)
+
+        # B x Number of Measurements x 3 (vertices) x 3 (coordinates)
+
+        plane_verts = torch.einsum(
+            'bmfc,mf->bmc', triangles[:, indices], bcs
+        )
+        # vertex =
+
+        np_vertices = vertices.detach().cpu().numpy()
+        np_faces = faces.detach().cpu().numpy()
+
+        names = ['chest', 'waist', 'hips']
+
+        output = {
+            'chest': {'points': [], 'value': []},
+            'waist': {'points': [], 'value': []},
+            'hips': {'points': [], 'value': []}
+        }
+
+        for bii in range(batch_size):
+            target_mesh = trimesh.Trimesh(
+                np_vertices[bii], np_faces[bii], process=False)
+
+            lines, to_3D, face_index = trimesh.intersections.mesh_multiplane(
+                target_mesh,
+                plane_origin=[0.0, 0.0, 0.0],
+                plane_normal=[0.0, 1.0, 0.0],
+                heights=plane_verts[bii, :, 1].detach().cpu().numpy(),
+            )
+
+            for meas_id, meas_name in enumerate(names):
+                meas_lines = lines[meas_id]
+
+                meas_lines = np.pad(
+                    meas_lines, ((0, 0), (0, 0), (0, 1)), mode='constant')
+                # meas_lines = np.pad(
+                #     meas_lines, ((0, 0), (0, 0), (0, 1)), mode='constant',
+                #     )
+                meas_lines_3d = np.einsum(
+                    'ij,plj->pli',
+                    to_3D[meas_id, :3, :3], meas_lines
+                ) + to_3D[meas_id, :3, 3]
+
+                points_in_plane = lines[meas_id].reshape(-1, 2)
+                hull = ConvexHull(points_in_plane)
+                point_indices = hull.simplices.reshape(-1)
+
+                hull_points = meas_lines_3d.reshape(-1, 3)[
+                    point_indices].reshape(-1, 2, 3)
+
+                meas_value = np.sqrt(
+                    np.power(hull_points[:, 1] -
+                             hull_points[:, 0], 2).sum(axis=1)
+                ).sum()
+
+                output[meas_name]['points'].append(
+                    torch.from_numpy(hull_points)
+                )
+                output[meas_name]['value'].append(meas_value)
+
+        for meas_id, meas_name in enumerate(names):
+            output[meas_name]['tensor'] = torch.tensor(
+                output[meas_name]['value'])
+
+        return output
+
     def compute_height(self, shaped_triangles: Tensor) -> Tuple[Tensor, Tensor]:
         ''' Compute the height using the heel and the top of the head
         '''
@@ -217,6 +334,8 @@ class BodyMeasurements(nn.Module):
     def forward(
         self,
         triangles: Tensor,
+        vertices: Tensor = None,
+        faces: Tensor = None,
         compute_mass: bool = True,
         compute_height: bool = True,
         compute_chest: bool = True,
@@ -225,6 +344,7 @@ class BodyMeasurements(nn.Module):
         **kwargs
     ):
         measurements = {}
+
         if compute_mass:
             measurements['mass'] = {}
             mesh_mass = self.compute_mass(triangles)
@@ -236,11 +356,13 @@ class BodyMeasurements(nn.Module):
             measurements['height']['tensor'] = mesh_height
             measurements['height']['points'] = points
 
-        output = self.compute_peripheries(triangles,
-                                          compute_chest=compute_chest,
-                                          compute_waist=compute_waist,
-                                          compute_hips=compute_hips,
-                                          )
+        output = self.compute_peripheries(
+            triangles,
+            vertices=vertices,
+            faces=faces,
+            compute_chest=compute_chest,
+            compute_waist=compute_waist, compute_hips=compute_hips)
+
         measurements.update(output)
 
         return {'measurements': measurements}
