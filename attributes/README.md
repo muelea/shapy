@@ -12,9 +12,9 @@ Bash script to run all A2S variations
 ``` 
 #!/bin/bash
 
-cd /is/cluster/lmueller2/projects/human_shape/attributes
+cd attributes
 
-OUTPUT_FOLDER=/ps/project/shapesemantics/trained_models_2/a2b_variations
+OUTPUT_FOLDER=../data/trained_models/a2b_variations
 CONFIGS=("01b_ah2s.yaml" "04a_hcwh2s.yaml" "02a_hw2s.yaml" "05b_ahwcwh2s.yaml" "03b_ac2s.yaml" "04b_ahcwh2s.yaml" "03a_c2s.yaml" "02b_ahw2s.yaml" "05a_hwcwh2s.yaml" "01a_h2s.yaml" "00_a2s.yaml")
 DS_GENDERS=("female" "male")
 MODEL_GENDERS=("female" "male")
