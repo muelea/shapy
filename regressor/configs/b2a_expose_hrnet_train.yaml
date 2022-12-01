@@ -1,0 +1,241 @@
+output_folder: ''
+# Add options to select gender
+# Flag for using the GPU
+use_cuda: True
+float_dtype: "float32"
+
+j14_regressor_path: '../data/expose_release/data/SMPLX_to_J14.pkl'
+summary_steps: 100
+img_summary_steps: 1000
+hd_img_summary_steps: 5000
+eval_steps: 5000
+checkpoint_steps: 1000
+max_duration: 14400.0
+imgs_per_row: 3
+pretrained: '../data/trained_models/expose/body_only/'
+
+datasets:
+    use_packed: False
+    batch_size: 48
+    pose_shape_ratio: 0.5
+    shape:
+        vertex_flip_correspondences: '../data/utility_files/smplx/smplx_correspondences.npz'
+        sampler:
+            use_equal_sampling: True
+            ratio_2d: 0.25
+        splits:
+            train: ['model_agencies']
+            val: ['model_agencies', 'hbw']
+            test: ['model_agencies', 'hbw', 'ssp3d']
+        transforms:
+            max_size: 800
+            flip_prob: 0.5
+            scale_dist: 'normal'
+            scale_factor: 0.25
+            rotation_factor: 30.0
+            noise_scale: 0.4
+        model_agencies:
+            data_folder: '../datasets/ModelAgencyData/'
+            keypoint_fname: 'keypoints.json'
+            splits_fname: 'weight_splits.json'
+            weight_fname: 'smplx_weights.json'
+            betas_fname: 'smplx_betas.json'
+            attributes_fname: 'attributes.json'
+            only_data_with_attributes: True
+        hbw:
+            data_folder: ''
+            img_folder: 'photos'
+            keyp_folder: 'keypoints/keypoints'
+            imgs_minimal: ''
+            keyps_minimal: ''
+            annot_fname: 'annotations.yaml'
+            gender_fname: 'genders.yaml'
+            mesh_folder: 'v_templates/smplx_with_optimization'
+            meas_definition_path: '../data/utility_files/measurements/measurement_defitions.yaml'
+            meas_vertices_path: '../data/utility_files/measurements/smplx_measurements.yaml'
+            body_model_folder: '../data/body_models/'
+    pose:
+        vertex_flip_correspondences: '../data/utility_files/smplx/smplx_correspondences.npz'
+        sampler:
+            use_equal_sampling: True
+            ratio_2d: 0.25
+        splits:
+            train: ['curated_fits', 'spin']
+            val: ['curated_fits']
+            test: ['threedpw']
+        num_workers:
+            train: 8
+            val: 6
+            test: 2
+        transforms:
+            max_size: 800
+            flip_prob: 0.5
+            scale_dist: 'normal'
+            scale_factor: 0.25
+            rotation_factor: 30.0
+            noise_scale: 0.4
+        human36mx:
+            data_folder: '../datasets/regressor_data/human36mx/'
+            annotations_fn: '../datasets/human36mx/npzs/human36m_smplx_train_rate_4.npz'
+            return_shape: True
+        ehf:
+            data_folder: ''
+            img_folder: 'images'
+        spin:
+            img_folder: '../datasets/SPINX/images'
+            return_shape: True
+            npz_files :
+                - '../datasets/SPINX/data_npz/mpii.npz'
+                - '../datasets/SPINX/data_npz/lsp.npz'
+                - '../datasets/SPINX/data_npz/lspet.npz'
+                - '../datasets/SPINX/data_npz/coco.npz'
+        spinx:
+            img_folder: ''
+            vertex_folder: ''
+            return_shape: True
+            return_expression: True
+            return_vertices: True
+            npz_files :
+                - ''
+        curated_fits:
+            data_folder: '../datasets/curated_fits/'
+            img_folder: '../datasets/curated_fits/images'
+            metrics: ['v2v']
+        threedpw:
+            data_folder: ''
+            img_folder: 'images'
+            seq_folder: 'processed_sequence_files'
+            param_folder: 'npz_data'
+            vertex_folder: 'smplx_vertices'
+optim:
+    type: 'adam'
+    lr: 1e-4
+    num_epochs: 3000
+    bias_lr_factor: 1.0
+    weight_decay: 1e-4
+    scheduler:
+        type: 'multi-step-lr'
+        gamma: 0.1
+        milestones: [60, 100]
+    sgd:
+        momentum: 0.9
+    adam:
+        betas: [0.9, 0.999]
+
+losses:
+    body:
+        stages_to_penalize: ['stage_02']
+        stages_to_regularize: ['stage_02']
+        body_joints_2d:
+            type: 'keypoints'
+            norm_type: 'l1'
+            weight: 1e0
+
+        body_joints_3d:
+            weight: 1e0
+            type: 'keypoints'
+            norm_type: 'l1'
+
+        shape:
+            weight: 1e-3
+            prior:
+                # type: 'threshold'
+                # weight: 1.0e-0
+                # margin: 3.0
+                type: 'gender-shape'
+                weight: 1e-2
+                gender_shape:
+                    prior_type: 'normal'
+                    female_stats_path: '../data/utility_files/shape_priors/female_normal.npz'
+                    male_stats_path: '../data/utility_files/shape_priors/male_normal.npz'
+        global_rot:
+            type: 'rotation'
+            weight: 1.0
+        body_pose:
+            type: 'rotation'
+            weight: 1.0
+            prior:
+                type: 'l2'
+                weight: 0.0
+        mass:
+            weight: 0.0
+        height:
+            weight: 0.0
+        chest:
+            weight: 0.0
+        waist:
+            weight: 0.0
+        hips:
+            weight: 0.0
+        attributes:
+            weight: 1.0e1
+        beta_refined:
+            weight: 0.0
+        vertex_refined:
+            weight: 0.0
+
+
+network:
+    type: 'SMPLXRegressor'
+    smplx:
+        type: 'iterative-mlp'
+        num_stages: 3
+        pose_last_stage: True
+        feature_key: 'concat'
+        predict_hands: False
+        predict_face: False
+        compute_measurements: True
+        meas_definition_path: '../data/utility_files/measurements/measurement_defitions.yaml'
+        meas_vertices_path: '../data/utility_files/measurements/smplx_measurements.yaml'
+        use_b2a: True
+        use_a2b: False
+        num_attributes: 15
+        b2a_males_checkpoint: '../data/b2a/polynomial/caesar-male_smplx-neutral-10betas/last.ckpt'
+        b2a_females_checkpoint: '../data/b2a/polynomial/caesar-female_smplx-neutral-10betas/last.ckpt'
+        a2b_males_checkpoint: ''
+        a2b_females_checkpoint: ''
+
+
+        backbone:
+            type: 'hrnet'
+            hrnet: 
+                pretrained_path: '../data/trained_models/shapy/SHAPY_A/checkpoints/best_checkpoint'
+        mlp:
+            layers: [1024, 1024]
+            dropout: 0.5
+            gain: 0.01
+            normalization:
+                type: 'none'
+            activation:
+                type: 'none'
+        camera:
+            pos_func: 'softplus'
+            weak_persp:
+                regress_translation: True
+                regress_scale: True
+
+body_model:
+    type: 'smplx'
+    model_folder: '../data/body_models/'
+    smplx:
+        mean_pose_path: '../data/expose_release/data/all_means.pkl'
+        betas:
+            num: 10
+        expression:
+            num: 10
+        j14_regressor_path: '../data/expose_release/data/SMPLX_to_J14.pkl'
+        use_face_contour: True
+        extra_joint_path: ''
+        head_verts_ids_path: '../data/expose_release/utility_files/flame/SMPL-X__FLAME_vertex_ids.npy'
+
+        global_rot:
+            type: 'cont_rot_repr'
+        body_pose:
+            type: 'cont_rot_repr'
+
+evaluation:
+    body:
+        p2p_t:
+            input_point_regressor_path: '../data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pkl'
+            target_point_regressor_path: '../data/utility_files/evaluation/eval_point_set/HD_SMPLX_from_SMPL.pkl'
+            align: True

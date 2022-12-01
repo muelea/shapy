@@ -127,6 +127,13 @@ python evaluate.py --exp-cfg configs/b2a_expose_hrnet_eval_shape.yaml --exp-opts
 ```
 
 
+## Training
+Please see [Dataset](./documentation/DATA.md) and download the training data. Then train SHAPY: 
+```
+python main.py --exp-cfg configs/b2a_expose_hrnet_train.yaml --exp-opts output_folder=$YOUR_OUTPUT_FOLDER/SHAPY_A datasets.batch_size=32 datasets.shape.model_agencies.only_data_with_attributes=True losses.body.attributes.weight=10.0
+```
+If you have access to SMPL-X fits for H3.6M, you can use `configs/b2a_expose_hrnet_train.yaml` instead of `configs/b2a_expose_hrnet_train.yaml`.
+
 ## Citation
 ```
 @inproceedings{Shapy:CVPR:2022,
