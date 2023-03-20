@@ -25,6 +25,7 @@ import torch.nn as nn
 import torch.autograd as autograd
 from loguru import logger
 
+import mesh_mesh_intersection
 import mesh_mesh_intersect_cuda
 
 
