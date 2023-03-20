@@ -51,7 +51,7 @@ If you are using other body models, i.e. not SMPL-X, please change the flags
 accordingly. E.g. for SMPL predictions use:
 ```
 cd regressor/hbw_evaluation
-python evaluate_hbw.py --input-npz-file my_smpl_prediction.npz --model-type smpl --point-reg-fit ../../data/utility_files/evaluation/eval_point_set/HD_SMPL_sparse.pkl \
+python evaluate_hbw.py --input-npz-file example_shapy_prediction.npz --model-type smpl --point-reg-fit ../../data/utility_files/evaluation/eval_point_set/HD_SMPL_sparse.pkl \
 ```
 
 We are currently working on a submission website. If you urgently need to get your estimate

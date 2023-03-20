@@ -96,12 +96,26 @@ def main(
     ).to('cuda')
 
     # create SMPL model
-    body_model = smplx.create(
+    #body_model = smplx.create(
+    #    model_path=body_model_folder,
+    #    model_type=model_type
+    #)
+    #faces_tensor = body_model.faces_tensor
+
+    # create ground-truth (SMPL-X) model
+    body_model_smplx = smplx.create(
+        model_path=body_model_folder,
+        model_type='smplx'
+    )
+    faces_tensor_smplx = body_model_smplx.faces_tensor
+
+    # create fir (SMPL or SMPL-X) model
+    body_model_fit = smplx.create(
         model_path=body_model_folder,
         model_type=model_type
     )
-    faces_tensor = body_model.faces_tensor
-
+    faces_tensor_fit = body_model_fit.faces_tensor
+    
     v2v_t_errors = []
     point_t_errors = []
     measurement_errors = {
@@ -125,9 +139,10 @@ def main(
         v_shaped_gt = v_shaped_gt.astype(np.float32)
         v_shaped_fit = v_shaped_fit.astype(np.float32)
 
-        # compute vertex-to-vertex error
-        v2v_error = point_error(v_shaped_fit, v_shaped_gt, align=True)
-        v2v_t_errors.append(v2v_error)
+        # compute vertex-to-vertex error (SMPL-X only)
+        if model_type == 'smplx':
+            v2v_error = point_error(v_shaped_fit, v_shaped_gt, align=True)
+            v2v_t_errors.append(v2v_error)
 
         # compute P2P-20k error
         points_gt = point_regressor_gt.dot(v_shaped_gt)
@@ -136,13 +151,15 @@ def main(
         point_t_errors.append(p2p_error)
 
         # compute height/chest/waist/hip error
-        shaped_triangles_gt = v_shaped_gt[faces_tensor]
+        #shaped_triangles_gt = v_shaped_gt[faces_tensor]
+        shaped_triangles_gt = v_shaped_gt[faces_tensor_smplx]
         shaped_triangles_gt = torch.from_numpy(shaped_triangles_gt) \
             .unsqueeze(0).to('cuda')
         measurements_gt = body_measurements_gt(
             shaped_triangles_gt)['measurements']
 
-        shaped_triangles_fit = v_shaped_fit[faces_tensor]
+        #shaped_triangles_fit = v_shaped_fit[faces_tensor]
+        shaped_triangles_fit = v_shaped_fit[faces_tensor_fit]
         shaped_triangles_fit = torch.from_numpy(shaped_triangles_fit) \
             .unsqueeze(0).to('cuda')
         measurements_fit = body_measurements_fit(
@@ -154,8 +171,9 @@ def main(
             measurement_errors[k].append(error)
 
     # print result 
-    final_v2v_t_error = np.array(v2v_t_errors).mean() * 1000
-    print(f'V2V Error: {final_v2v_t_error:.0f} mm')
+    if model_type == 'smplx': 
+        final_v2v_t_error = np.array(v2v_t_errors).mean() * 1000
+        print(f'V2V Error: {final_v2v_t_error:.0f} mm')
 
     final_point_t_error = np.array(point_t_errors).mean() * 1000
     print(f'P2P-20k Error: {final_point_t_error:.0f} mm')
