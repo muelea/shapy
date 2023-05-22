@@ -16,7 +16,8 @@
 
 
 ##  News
-- [2022/08/11] The HBW Test split evluation protocol is available. See [HBW Test](regressor/hbw_evaluation/README_HBW_EVAL.md)
+- [2023/05/22] Since some people have trouble installing SHAPY. Here's a [Google Colab](https://colab.research.google.com/drive/16b5bgRrkdMkI7VILa8GS3m6yQeLH2xGI?usp=sharing).
+- [2022/08/11] The HBW Test split evluation protocol is available. See [HBW Test](regressor/hbw_evaluation/README_HBW_EVAL.md).
 - [2022/08/11] Supporting SHAPY evaluation on the HBW validation set. See [Evaluation](#evaluation).
 
 
